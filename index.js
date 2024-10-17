@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotevn from "dotenv";
-import { productos,mercados,prioridad,addProducto,delProducto } from "./db.js";
+import { productos,mercados,prioridad,addProducto,delProducto,updateProducto } from "./db.js";
 
 dotevn.config();
 const server = express();
@@ -78,7 +78,7 @@ server.post("/productos/nuevo", async (req,res) => {
         res.status(500);
         res.send({ error : "add producto req error" });
     }
-})
+});
 
 
 
@@ -98,6 +98,23 @@ server.delete("/productos/borrar", async (req,res) => {
     }
 })
 
+
+
+
+/* UPDATE PRODUCTOS */
+
+server.put("/productos/editar", async (req,res) => {
+    try{
+        let actProducto = await updateProducto(req.body.id,req.body.producto);
+
+        res.json(actProducto);
+
+    }catch(error){
+        console.log(error);
+        res.status(500);
+        res.send({ error : "update producto req error" });
+    }
+})
 
 
 

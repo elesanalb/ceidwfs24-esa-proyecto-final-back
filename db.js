@@ -357,11 +357,11 @@ prioridad()
 .catch( x => console.log(x));
 */
 
-
+/*
 maxCompra()
 .then( x => console.log(x))
 .catch( x => console.log(x));
-
+*/
 
 /*
 delProducto(1)
@@ -440,7 +440,7 @@ editPrioridad(
 */
 
 
-
+/*
 
 `SELECT 
     estudiantes.nombre,
@@ -450,3 +450,4 @@ AS aula FROM estudiantes
 INNER JOIN aulas ON 
     estudiantes.aula = aulas.id 
 WHERE estudiantes.id = ?`
+*/
