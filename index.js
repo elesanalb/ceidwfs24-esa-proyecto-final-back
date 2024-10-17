@@ -110,7 +110,7 @@ server.put("/productos/editar", async (req,res) => {
         res.json(actProducto);
 
     }catch(error){
-        console.log(error);
+        //console.log(error);
         res.status(500);
         res.send({ error : "update producto req error" });
     }

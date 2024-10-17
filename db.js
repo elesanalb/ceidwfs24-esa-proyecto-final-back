@@ -221,12 +221,13 @@ export function delProducto(id){
 
 
 
-export function updateProducto({id,producto}){
+export function updateProducto(id,producto){
     return new Promise( async (ok,ko) => {
         try{
             let conexion = await conectar();
 
             let resultado = await conexion `UPDATE productos SET producto = ${producto} WHERE id = ${id}`;
+            
 
             conexion.end();
             ok(resultado);
@@ -391,6 +392,17 @@ addMercado("Lidl")
 
 /*
 addPrioriad("urgente")
+.then( x => console.log(x))
+.catch( x => console.log(x));
+*/
+
+/*
+updateProducto(
+    {
+        id : 22,
+        producto : "jfakd"
+    }
+)
 .then( x => console.log(x))
 .catch( x => console.log(x));
 */
