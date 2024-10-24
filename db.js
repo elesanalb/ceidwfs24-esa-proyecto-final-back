@@ -15,6 +15,21 @@ function conectar(){
 
 
 
+/* ------------------------------------------------------------------------------------------------------------------------ */
+
+
+/* LEER -------------------------------------------------------- *\
+*
+*                                                  DB - index
+*   - Join productos full info --> productos()     | ok |  ok
+*   - Leer tabla productos ------> productosInfo() | ok |  ok
+*   - Leer mercados -------------> mercados()      | ok |  ok
+*   - Leer prioridad ------------> prioridad()     | ok |  ok
+*   - Leer tipos ----------------> tipos()         | ok |  ok
+*
+* --------------------------------------------------------------- */
+
+
 
 export function productos(){
     return new Promise( async (ok,ko) => {
@@ -27,28 +42,40 @@ export function productos(){
                                                 productos.precio,
                                                 productos.max,
                                                 productos.units,
+                                                productos.preciokg,
+                                                productos.frecuencia,
+                                                productos.estado,
+                                                productos.tipo,
                                                 mercados.mercado,
-                                                prioridad.prioridad
+                                                prioridad.prioridad,
+                                                tipos.tipo,
+                                            concat(cantidad,cantidadud) AS cantidad
                                             FROM productos
                                             JOIN mercados ON
                                                 productos.mercado = mercados.id
                                             JOIN prioridad ON
                                                 productos.prioridad = prioridad.id
+                                            JOIN tipos ON
+                                                productos.tipo = tipos.id
                                             `;
 
             conexion.end();
             ok(resultado);
 
         }catch(error){
-            ko({ error : "productos mercados db error" });
+            ko({ error : "productos full info db error" });
             console.log(error);
         }
     })
 }
 
+/*
+productos().then( x => console.log(x)).catch( x => console.log(x));
+*/
 
 
-export function productosDB(){
+
+export function productosInfo(){
     return new Promise( async (ok,ko) => {
         try{
             let conexion = await conectar();
@@ -77,7 +104,7 @@ export function mercados(){
             ok(resultado);
 
         }catch(error){
-            ko({ error : "productos db error" });
+            ko({ error : "mercados db error" });
         }
     });
 }
@@ -95,70 +122,90 @@ export function prioridad(){
             ok(resultado);
 
         }catch(error){
-            ko({ error : "prioridad productos db error" });
+            ko({ error : "prioridad db error" });
         }
     });
 }
 
 
 
-export function maxCompra(){
+export function tipos(){
     return new Promise( async (ok,ko) => {
         try{
             let conexion = await conectar();
 
-            let resultado = await conexion `UPDATE maxcompra
-                                            
-                                            `;
+            let resultado = await conexion `SELECT * FROM tipos`;
+
             conexion.end();
             ok(resultado);
 
-            /*
-            SELECT
-                                                maxcompra.id,
-                                                maxcompra.max,
-                                                productos.producto
-                                            FROM maxcompra 
-                                            INNER JOIN productos
-                                                maxcompra.productos = productos.id
-             */
-            
-            /*
-            `SELECT 
-                estudiantes.id,
-                estudiantes.nombre,
-                aulas.nombre 
-            AS aula FROM estudiantes 
-            INNER JOIN aulas ON 
-                estudiantes.aula = aulas.id
-            WHERE estudiantes.aula = ?`
-            */
+        }catch(error){
+            ko({ error : "tipos db error"})
+        }
+    });
+}
 
+/*
+tipos().then( x => console.log(x)).catch( x => console.log(x));
+*/
+
+
+
+
+/* ------------------------------------------------------------------------------------------------------------------------ */
+
+
+/* CREAR ----------------------------------------------- *\
+*
+*                                               DB - index
+*   - Crear productos ---> addProductos()     | ok |  ok
+*       · Más opciones --> addProductoFull()  | ok |  ok
+*   - Crear mercados ----> addMercados()      | ok |  ok
+*   - Crear prioridad ---> addPrioridad()     | ok |  ok
+*   - Crear tipos -------> addTipos()         | ok |  ok
+*
+* ------------------------------------------------------ */
+
+export function addProducto(producto,estado,precio,preciokg,mercado){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = await conectar();
+
+            let respuesta = await conexion `INSERT INTO productos 
+                                                (producto,estado,precio,preciokg,mercado)
+                                            VALUES
+                                                (${producto},${estado},${precio},${preciokg},${mercado})
+                                            RETURNING id
+                                            `;
+
+            conexion.end();
+            ok(respuesta);
 
         }catch(error){
-            console.log(error)
-            ko({ error : "max compra db error" });
+            ko({ error : "add producto db error" });
         }
-    })
+    });
 }
 
 
 
-export function addProducto(producto,mercado,precio,prioridad,max,units){
+export function addProductoFull(producto,estado,precio,preciokg,mercado,cantidad,cantidadud,max,units,prioridad,tipo,frecuencia){
     return new Promise( async (ok,ko) => {
         try{
             let conexion = await conectar();
 
-            let resultado = await conexion `INSERT INTO productos 
-                                                (producto,mercado,precio,prioridad,max,units) 
+            let respuesta = await conexion `INSERT INTO productos
+                                                (producto,estado,precio,preciokg,mercado,cantidad,cantidadud,max,units,prioridad,tipo,frecuencia)
                                             VALUES
-                                                (${producto},${mercado},${precio},${prioridad},${max},${units})`;
+                                                (${producto},${estado},${precio},${preciokg},${mercado},${cantidad},${cantidadud},${max},${units},${prioridad},${tipo},${frecuencia})
+                                            RETURNING id
+                                            `;
 
             conexion.end();
-            ok(resultado);
+            ok(respuesta);
 
         }catch(error){
-            ko({ error : "add producto db error" });
+            ko({ error : "add producto full db error" });
             console.log(error);
         }
     });
@@ -171,7 +218,7 @@ export function addMercado(mercado){
         try{
             let conexion = await conectar();
 
-            let resultado = await conexion `INSERT INTO mercados (mercado) VALUES (${mercado})`;
+            let resultado = await conexion `INSERT INTO mercados (mercado) VALUES (${mercado}) RETURNING id`;
 
             conexion.end();
             ok(resultado);
@@ -185,12 +232,12 @@ export function addMercado(mercado){
 
 
 
-export function addPrioriad(prioridad){
+export function addPrioridad(prioridad){
     return new Promise( async (ok,ko) => {
         try{
             let conexion = await conectar();
 
-            let resultado = await conexion `INSERT INTO prioridad (prioridad) VALUES (${prioridad})`;
+            let resultado = await conexion `INSERT INTO prioridad (prioridad) VALUES (${prioridad}) RETURNING id`;
 
             conexion.end();
             ok(resultado);
@@ -200,6 +247,44 @@ export function addPrioriad(prioridad){
         }
     });
 }
+
+
+
+export function addTipo(tipo){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = await conectar();
+
+            let resultado = await conexion `INSERT INTO tipos (tipo) VALUES (${tipo}) RETURNING id`;
+
+            conexion.end();
+            ok(resultado);
+            
+        }catch(error){
+            ko({ error : "add tipos db error" });
+        }
+    });
+}
+
+/*
+addTipos("basico").then( x => console.log(x)).catch( x => console.log(x));
+*/
+
+
+
+
+/* ------------------------------------------------------------------------------------------------------------------------ */
+
+
+/* BORRAR ----------------------------------------------- *\
+*
+*                                           DB - index
+*   - Borrar productos --> delProductos() | ok |  ok
+*   - Borrar mercados ---> delMercados()  | ok |  ok
+*   - Borrar prioridad --> delPrioridad() | ok |  ok
+*   - Borrar tipos ------> delTipos()     | ok |  ok
+*
+* ------------------------------------------------------ */
 
 
 
@@ -221,6 +306,89 @@ export function delProducto(id){
 
 
 
+export function delMercado(id){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = await conectar();
+
+            let resultado = await conexion `DELETE FROM mercados WHERE id = ${id}`;
+
+            conexion.end();
+            ok(resultado);
+
+        }catch(error){
+            ko({ error : "del mercado db error" });
+        }
+    });
+}
+
+
+
+export function delPrioridad(id){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = await conectar();
+
+            let resultado = await conexion `DELETE FROM prioridad WHERE id = ${id}`;
+
+            conexion.end();
+            ok(resultado)
+
+        }catch(error){
+            ko({ error : "del prioridad db error" });
+        }
+    });
+}
+
+/*
+delPrioridad(4).then( x => console.log(x)).catch( x => console.log(x));
+*/
+
+
+
+export function delTipo(id){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = await conectar();
+
+            let resultado = await conexion `DELETE FROM tipos WHERE id = ${id}`;
+
+            conexion.end();
+            ok(resultado);
+            
+        }catch(error){
+            ko({ error : "del tipo db error" });
+        }
+    });
+}
+
+
+
+
+
+/* ------------------------------------------------------------------------------------------------------------------------ */
+
+
+/* ACTUALIZAR ----------------------------------------------- *\
+*
+*                                                    DB - index
+*   - Actualizar productos ----> updateProductos()  | ok |  ok
+*   - Actualizar estado -------> updateEstado()     | ok |  ok
+*   - Actualizar precio -------> updatePrecio()     | ok |  ok
+*   - Actualizar precio/kg ----> updatePrecioKg()   | ok |  ok
+*   - Actualizar mercado ------> updateMercado()    | ok |  ok
+*   - Actualizar cantidad -----> updateCantidad()   | ok |  --
+*   - Actualizar cantidad ud --> updateCantidadUd() | ok |  --
+*   - Actualizar max ----------> updateMax()        | ok |  ok
+*   - Actualizar unidades -----> updateUnits()      | ok |  --
+*   - Actualizar prioridad ----> updatePrioridad()  | ok |  ok
+*   - Actualizar tipo ---------> updateTipo()       | ok |  --
+*   - Actualizar frecuencia ---> updateFrecuencia() | ok |  -- 
+*
+* ------------------------------------------------------ */
+
+
+
 export function updateProducto(id,producto){
     return new Promise( async (ok,ko) => {
         try{
@@ -234,33 +402,31 @@ export function updateProducto(id,producto){
 
         }catch(error){
             ko({ error : "update producto db error" });
-            console.log(error);
         }
     })
 }
 
 
 
-export function updateMercado({id,mercado}){
+export function updateEstado(id,estado){
     return new Promise( async (ok,ko) => {
         try{
             let conexion = await conectar();
 
-            let resultado = await conexion `UPDATE productos SET mercado = ${mercado} WHERE id = ${id}`;
+            let resultado = await conexion `UPDATE productos SET estado = ${estado} WHERE id =  ${id}`;
 
             conexion.end();
             ok(resultado);
 
         }catch(error){
-            //console.log(error);
-            ko({ error : "update mercado db error" });
+            ko({ error : "update estado db error" });
         }
     });
 }
 
 
 
-export function updatePrecio({id,precio}){
+export function updatePrecio(id,precio){
     return new Promise( async (ok,ko) => {
         try{
             let conexion = await conectar();
@@ -278,7 +444,88 @@ export function updatePrecio({id,precio}){
 
 
 
-export function updateMax({id,max}){
+export function updatePrecioKg(id,preciokg){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = await conectar();
+
+            let resultado = await conexion `UPDATE productos SET preciokg = ${preciokg} WHERE id = ${id}`;
+
+            conexion.end();
+            ok(resultado);
+
+
+        }catch(error){
+            ko({ error : "update precio kg db error" });
+        }
+    });
+}
+
+
+
+export function updateMercado(id,mercado){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = await conectar();
+
+            let resultado = await conexion `UPDATE productos SET mercado = ${mercado} WHERE id = ${id}`;
+
+            conexion.end();
+            ok(resultado);
+
+        }catch(error){
+            ko({ error : "update mercado db error" });
+        }
+    });
+}
+
+
+
+export function updateCantidad(id,cantidad){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = await conectar();
+
+            let resultado = await conexion `UPDATE productos SET cantidad = ${cantidad} WHERE id = ${id}`;
+
+            conexion.end();
+            ok(resultado);
+
+        }catch(error){
+            ko({ error : "update cantidad db error" });
+        }
+    });
+}
+
+/*
+updateCantidad(50,"30").then( x => console.log(x)).catch( x => console.log(x));
+*/
+
+
+
+export function updateCantidadUd(id,cantidadud){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = await conectar();
+
+            let resultado = await conexion `UPDATE productos SET cantidadud = ${cantidadud} WHERE id = ${id}`;
+
+            conexion.end();
+            ok(resultado);
+
+        }catch(error){
+            ko({ error : "update cantidad ud db error" });
+        }
+    });
+}
+
+/*
+updateCantidadUd(50,"kg").then( x => console.log(x)).catch( x => console.log(x));
+*/
+
+
+
+export function updateMax(id,max){
     return new Promise( async (ok,ko) => {
         try{
             let conexion = await conectar();
@@ -296,7 +543,25 @@ export function updateMax({id,max}){
 
 
 
-export function updatePrioridad({id,prioridad}){
+export function updateUnits(id,units){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = await conectar();
+            
+            let resultado = await conexion `UPDATE productos SET units = ${units} WHERE id = ${id}`;
+
+            conexion.end();
+            ok(resultado);
+
+        }catch(error){
+            ko({ error : "update units db error" });
+        }
+    });
+}
+
+
+
+export function updatePrioridad(id,prioridad){
     return new Promise( async (ok,ko) => {
         try{
             let conexion = await conectar();
@@ -314,7 +579,79 @@ export function updatePrioridad({id,prioridad}){
 
 
 
-export function editPrioridad({id,prioridad}){
+export function updateTipo(id,tipo){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = await conectar();
+            
+            let resultado = await conexion `UPDATE productos SET tipo = ${tipo} WHERE id = ${id}`;
+
+            conexion.end();
+            ok(resultado);
+
+        }catch(error){
+            ko({ error : "update tipo db error" });
+        }
+    });
+}
+
+/*
+updateTipo("1").then( x => console.log(x)).catch( x => console.log(x));
+*/
+
+
+
+export function updateFrecuencia(id,frecuencia){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = await conectar();
+
+            let resultado = await conexion `UPDATE productos SET frecuencia = ${frecuencia} WHERE id = ${id}`;
+
+            conexion.end();
+            ok(resultado);
+
+        }catch(error){
+            ko({ error : "update frecuencia db error" });
+        }
+    });
+}
+
+
+
+
+/* ------------------------------------------------------------------------------------------------------------------------ */
+
+/* EDITAR ----------------------------------------------- *\
+*
+*                                            DB - index
+*   - Editar mercados ---> editMercados()  | ok |  ok
+*   - Editar prioridad --> editPrioridad() | ok |  ok
+*   - Editar tipos ------> editTipos()     | ok |  ok
+*
+* ------------------------------------------------------ */
+
+
+
+export function editMercados(id,mercado){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = await conectar();
+
+            let resultado = await conexion `UPDATE mercados SET mercado = ${mercado} WHERE id = ${id}`;
+
+            conexion.end();
+            ok(resultado);
+
+        }catch(error){
+            ko({ error : "edit mercados db error" });
+        }
+    });
+}
+
+
+
+export function editPrioridad(id,prioridad){
     return new Promise( async (ok,ko) => {
         try{
             let conexion = await conectar();
@@ -325,141 +662,29 @@ export function editPrioridad({id,prioridad}){
             ok(resultado);
 
         }catch(error){
-            ko({ error : "update prioridad db error" });
+            ko({ error : "edit prioridad db error" });
         }
     });
 }
 
 
 
+export function editTipos(id,tipo){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = await conectar();
 
+            let resultado = await conexion `UPDATE tipos SET tipo = ${tipo} WHERE id = ${id}`;
 
-/*
-productos()
-.then( x => console.log(x))
-.catch( x => console.log(x));
-*/
+            conexion.end();
+            ok(resultado);
 
-/*
-productosDB()
-.then( x => console.log(x))
-.catch( x => console.log(x));
-*/
-
-/*
-mercados()
-.then( x => console.log(x))
-.catch( x => console.log(x));
-*/
+        }catch(error){
+            ko({ error : "edit tipos db error" });
+        }
+    });
+}
 
 /*
-prioridad()
-.then( x => console.log(x))
-.catch( x => console.log(x));
-*/
-
-/*
-maxCompra()
-.then( x => console.log(x))
-.catch( x => console.log(x));
-*/
-
-/*
-delProducto(1)
-.then( x => console.log(x))
-.catch( x => console.log(x));
-*/
-
-/*
-addProducto(
-    { 
-        producto : "Mantequilla",
-        mercado : 1,
-        precio : 1.9,
-        prioridad : 2,
-        max : 2
-    }
-)
-.then( x => console.log(x))
-.catch( x => console.log(x));
-*/
-
-/*
-addMercado("Lidl")
-.then( x => console.log(x))
-.catch( x => console.log(x));
-*/
-
-/*
-addPrioriad("urgente")
-.then( x => console.log(x))
-.catch( x => console.log(x));
-*/
-
-/*
-updateProducto(
-    {
-        id : 22,
-        producto : "jfakd"
-    }
-)
-.then( x => console.log(x))
-.catch( x => console.log(x));
-*/
-
-/*
-updatePrecio(
-    {
-        id : 3,
-        precio : 2.99
-    }
-)
-.then( x => console.log(x))
-.catch( x => console.log(x));
-*/
-
-/*
-updateMax(
-    {
-        id : 3,
-        max : 4
-    }
-)
-.then( x => console.log(x))
-.catch( x => console.log(x));
-*/
-
-/*
-updatePrioridad(
-    {
-        id : 4,
-        prioridad : 2, 
-    }
-)
-.then( x => console.log(x))
-.catch( x => console.log(x));
-*/
-
-/*
-editPrioridad(
-    {
-        id : 3,
-        prioridad : "importante"
-    }
-)
-.then( x => console.log(x))
-.catch( x => console.log(x));
-*/
-
-
-/*
-
-`SELECT 
-    estudiantes.nombre,
-    estudiantes.edad,
-    aulas.nombre 
-AS aula FROM estudiantes
-INNER JOIN aulas ON 
-    estudiantes.aula = aulas.id 
-WHERE estudiantes.id = ?`
+editTipos(9,"limpieza").then( x => console.log(x)).catch( x => console.log(x));
 */
