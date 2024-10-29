@@ -2,9 +2,9 @@ import express from "express";
 import cors from "cors";
 import dotevn from "dotenv";
 import { 
-    productosInfo,
-    productos,addProducto,addProductoFull,delProducto,updateProducto,
-    updateEstado,updatePrecio,updatePrecioKg,updateMercado,updateCantidad,updateCantidadUd,updateMax,updateUnits,updatePrioridad,updateTipo,updateFrecuencia,
+    productos,addProducto,delProducto,updateProducto,
+    productosInfo,listaCompra,productosFrecuencia,
+    updateEstado,updatePrecio,updatePrecioKg,updateMercado,updateCantidad,updateMax,updateUnits,updatePrioridad,updateTipo,updateFrecuencia,
     mercados,addMercado,delMercado,editMercados,
     prioridad,addPrioridad,delPrioridad,editPrioridad,
     tipos,addTipo,delTipo,editTipos,
@@ -61,6 +61,35 @@ server.get("/productos/info", async (req,res) => {
 
 
 
+server.post("/productos/compra", async (req,res) => {
+    try{
+        let listaProductosCompra = await listaCompra(req.body.filtromercado);
+
+        res.json(listaProductosCompra);
+
+    }catch(error){
+        res.status(500);
+        res.send({ error : "lista compra req error" });
+    }
+});
+
+
+
+server.post("/productos/frecuencia", async (req,res) => {
+    try{
+        let listaFrecuencia = await productosFrecuencia(req.body.frecuencia);
+
+        res.json(listaFrecuencia)
+
+    }catch(error){
+        console.log(error)
+        res.status(500);
+        res.send({ error : "productos frecuencia req error" });
+    }
+});
+
+
+
 server.get("/mercados", async (req,res) => {
     try{
         let listaMercados = await mercados();
@@ -109,7 +138,6 @@ server.get("/tipos", async (req,res) => {
 /* POST ----------------------------------------------- *\
 *
 *   - Post productos ----------> addProductos()    | ok
-*       · Post producto full --> addProductoFull() | ok
 *   - Post mercados -----------> addMercados()     | ok
 *   - Post prioridad ----------> addPrioridad()    | ok
 *   - Post tipos --------------> addTipos()        | ok
@@ -118,11 +146,20 @@ server.get("/tipos", async (req,res) => {
 
 server.post("/productos/nuevo", async (req,res) => {
     try{
-        let nuevoProducto = await addProducto(req.body.producto,
+
+        console.log(req.body)
+        let nuevoProducto = await addProducto(  req.body.producto,
                                                 req.body.estado,
                                                 req.body.precio,
+                                                req.body.mercado,
                                                 req.body.preciokg,
-                                                req.body.mercado
+                                                req.body.cantidad,
+                                                req.body.cantidadud,
+                                                req.body.units,
+                                                req.body.max,
+                                                req.body.prioridad,
+                                                req.body.tipo,
+                                                req.body.frecuencia
                                             );
 
         res.json(nuevoProducto);
@@ -133,31 +170,6 @@ server.post("/productos/nuevo", async (req,res) => {
     }
 });
 
-
-
-server.post("/productos/nuevo/full", async (req,res) => {
-    try{
-        let nuevoProductoFull = await addProductoFull(req.body.producto,
-                                                        req.body.estado,
-                                                        req.body.precio,
-                                                        req.body.preciokg,
-                                                        req.body.mercado,
-                                                        req.body.cantidad,
-                                                        req.body.cantidadud,
-                                                        req.body.max,
-                                                        req.body.units,
-                                                        req.body.prioridad,
-                                                        req.body.tipo,
-                                                        req.body.frecuencia
-                                                    );
-
-        res.json(nuevoProductoFull);
-        
-    }catch(error){
-        res.status(500);
-        res.send({ error : "add producto full req error" });
-    }
-});
 
 
 
@@ -286,13 +298,12 @@ server.delete("/tipos/borrar", async (req,res) => {
 *   - Put precio -------> updatePrecio()     | ok
 *   - Put precio kg ----> updatePrecioKg()   | ok
 *   - Put mercado ------> updateMercado()    | ok
-*   - Put cantidad -----> updateCantidad()   | --
-*   - PUt cantidad ud --> updateCantidadUd() | --
+*   - Put cantidad -----> updateCantidad()   | ok
 *   - Put max ----------> updateMax()        | ok
-*   - Put unidades -----> updateUnits()      | --
+*   - Put unidades -----> updateUnits()      | ok
 *   - Put prioridad ----> updatePrioridad()  | ok
-*   - Put tipo ---------> updateTipo()       | --
-*   - Put frecuencia ---> updateFrecuencia   | --
+*   - Put tipo ---------> updateTipo()       | ok
+*   - Put frecuencia ---> updateFrecuencia   | ok
 *
 *   - Put mercados -----> editMercados()     | ok
 *   - Put prioridad ----> editPrioridad()    | ok
@@ -372,7 +383,7 @@ server.put("/productos/editar/mercado", async (req,res) => {
 
 server.put("/productos/editar/cantidad", async (req,res) => {
     try{
-        let actCantidad = await updateCantidad(req.body.id,req.body.cantidad);
+        let actCantidad = await updateCantidad(req.body.id,req.body.cantidad,req.body.cantidadud);
 
         res.json(actCantidad);
 
@@ -398,6 +409,20 @@ server.put("/productos/editar/max", async (req,res) => {
 
 
 
+server.put("/productos/editar/units", async (req,res) => {
+    try{
+        let actUnits = await updateUnits(req.body.id,req.body.units);
+
+        res.json(actUnits);
+
+    }catch(error){
+        res.status(500);
+        res.send({ error : "update units req error" });
+    }
+});
+
+
+
 server.put("/productos/editar/prioridad", async (req,res) => {
     try{
         let actPrioridad = await updatePrioridad(req.body.id,req.body.prioridad);
@@ -407,6 +432,35 @@ server.put("/productos/editar/prioridad", async (req,res) => {
     }catch(error){
         res.status(500);
         res.send({ error : "update prioridad req error" });
+    }
+});
+
+
+
+server.put("/productos/editar/tipo", async (req,res) => {
+    try{
+        let actTipo = updateTipo(req.body.id,req.body.tipo);
+
+        res.json(actTipo);
+
+    }catch(error){
+        res.status(500);
+        res.send({ error : "update tipo req error" });
+    }
+});
+
+
+
+server.put("/productos/editar/frecuencia", async (req,res) => {
+    try{
+        let actFrecuencia = await updateFrecuencia(req.body.id,req.body.frecuencia);
+
+        res.json(actFrecuencia);
+
+    }catch(error){
+        console.log(error)
+        res.status(500);
+        res.send({ error : "update frecuencia req error" });
     }
 });
 

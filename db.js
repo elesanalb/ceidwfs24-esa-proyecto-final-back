@@ -39,12 +39,12 @@ export function productos(){
             let resultado = await conexion `SELECT 
                                                 productos.id,
                                                 productos.producto,
+                                                productos.estado,
                                                 productos.precio,
+                                                productos.preciokg,
                                                 productos.max,
                                                 productos.units,
-                                                productos.preciokg,
                                                 productos.frecuencia,
-                                                productos.estado,
                                                 productos.tipo,
                                                 mercados.mercado,
                                                 prioridad.prioridad,
@@ -57,6 +57,7 @@ export function productos(){
                                                 productos.prioridad = prioridad.id
                                             JOIN tipos ON
                                                 productos.tipo = tipos.id
+                                            ORDER BY estado,prioridad ASC
                                             `;
 
             conexion.end();
@@ -90,6 +91,100 @@ export function productosInfo(){
         }
     });
 }
+
+
+
+export function listaCompra(){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = await conectar();
+
+            let resultado = await conexion `SELECT 
+                                                productos.id,
+                                                productos.producto,
+                                                productos.estado,
+                                                productos.precio,
+                                                productos.preciokg,
+                                                productos.max,
+                                                productos.units,
+                                                productos.frecuencia,
+                                                productos.tipo,
+                                                mercados.mercado,
+                                                prioridad.prioridad,
+                                                tipos.tipo,
+                                            concat(cantidad,cantidadud) AS cantidad
+                                            FROM productos
+                                            JOIN mercados ON
+                                                productos.mercado = mercados.id
+                                            JOIN prioridad ON
+                                                productos.prioridad = prioridad.id
+                                            JOIN tipos ON
+                                                productos.tipo = tipos.id
+                                            WHERE estado = false
+                                            ORDER BY prioridad,mercado ASC
+                                            `;
+
+            conexion.end();
+            ok(resultado);
+            
+
+        }catch(error){
+            ko({ error : "productos full info db error" });
+            console.log(error);
+        }
+    })
+}
+
+/*
+listaCompra(1).then( x => console.log(x)).catch( x => console.log(x))
+*/
+
+
+
+export function productosFrecuencia(frecuencia,producto,mercado,tipo,prioridad){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = conectar();
+
+            let resultado = await conexion `SELECT 
+                                                productos.id,
+                                                productos.producto,
+                                                productos.estado,
+                                                productos.precio,
+                                                productos.preciokg,
+                                                productos.max,
+                                                productos.units,
+                                                productos.frecuencia,
+                                                productos.tipo,
+                                                mercados.mercado,
+                                                prioridad.prioridad,
+                                                tipos.tipo,
+                                            concat(cantidad,cantidadud) AS cantidad
+                                            FROM productos
+                                            JOIN mercados ON
+                                                productos.mercado = mercados.id
+                                            JOIN prioridad ON
+                                                productos.prioridad = prioridad.id
+                                            JOIN tipos ON
+                                                productos.tipo = tipos.id
+                                            WHERE frecuencia = ${frecuencia}
+                                            ORDER BY estado,prioridad,productos.tipo ASC
+                                            `;
+                                            
+            
+            conexion.end();
+            ok(resultado);
+
+        }catch(error){
+            console.log(error)
+            ko({ error : "productos frecuencia db error" });
+        }
+    });
+}
+
+/*
+productosFrecuencia(2,"ajo").then( x => console.log(x)).catch( x => console.log(x));
+*/
 
 
 
@@ -166,50 +261,124 @@ tipos().then( x => console.log(x)).catch( x => console.log(x));
 *
 * ------------------------------------------------------ */
 
-export function addProducto(producto,estado,precio,preciokg,mercado){
+export function addProducto(producto,estado,precio,mercado,preciokg,cantidad,cantidadud,units,max,prioridad,tipo,frecuencia){
     return new Promise( async (ok,ko) => {
+        
         try{
             let conexion = await conectar();
 
-            let respuesta = await conexion `INSERT INTO productos 
-                                                (producto,estado,precio,preciokg,mercado)
+            let [{id}] = await conexion `INSERT INTO productos 
+                                                (producto,estado,precio,mercado)
                                             VALUES
-                                                (${producto},${estado},${precio},${preciokg},${mercado})
+                                                (${producto},${estado},${precio},${mercado})
                                             RETURNING id
                                             `;
 
+
+            let addPrecioKg = await id;
+
+            if( preciokg ){
+                addPrecioKg = await conexion `UPDATE productos SET preciokg = ${preciokg} WHERE id = ${id}`;
+            }
+
+
+            let addCantidad = await addPrecioKg;
+
+            if( cantidad ){
+                addCantidad = await conexion `UPDATE productos SET cantidad = ${cantidad} WHERE id = ${id}`;
+            }
+
+
+            let addCantidadUd = await addCantidad;
+
+            if( cantidadud ){
+                addCantidadUd = await conexion `UPDATE productos SET cantidadud =${cantidadud} WHERE id = ${id}`;
+            }
+
+            
+            let addUnits = await addCantidadUd;
+            
+            if( units ){
+                addUnits = await conexion `UPDATE productos SET units = ${units} WHERE id = ${id}`
+            }
+
+
+            let addMax = await addUnits;
+
+            if( max ){
+                addMax = await conexion `UPDATE productos SET max = ${max} WHERE id = ${id}`;
+            }
+
+
+            let addPrioridad = await addMax;
+
+            if( prioridad ){
+                addPrioridad = await conexion `UPDATE productos SET prioridad = ${prioridad} WHERE id = ${id}`;
+            }
+
+
+            let addTipo = await addPrioridad;
+
+            if( tipo ){
+                addTipo = await conexion `UPDATE productos SET tipo = ${tipo} WHERE id = ${id}`;
+            }
+
+
+            let addFrecuencia = await addTipo;
+
+            if( frecuencia ){
+                addFrecuencia = await conexion `UPDATE productos SET frecuencia = ${frecuencia} WHERE id = ${id}`;
+            }
+            
+
             conexion.end();
-            ok(respuesta);
+            ok(id);
+
+            if( preciokg ){
+                ok(addPrecioKg)
+            }
+
+            if( cantidad ){
+                ok(addCantidad)
+            }
+
+            if( cantidadud ){
+                ok(addCantidadUd)
+            }
+
+            if( units ){
+                ok(addUnits)
+            }
+
+            if( max ){
+                ok(addMax)
+            }
+
+            if( prioridad ){
+                ok(addPrioridad)
+            }
+
+            if( tipo ){
+                ok(addTipo)
+            }
+
+            if( frecuencia ){
+                ok(addFrecuencia)
+            }
+
+
 
         }catch(error){
             ko({ error : "add producto db error" });
+            console.log(error)
         }
     });
 }
 
+/*
+addProducto({ producto : "merluza", estado : false, precio : 0.6, mercado : 5, preciokg : null, cantidad : 40, cantidadud : "g", units : 2, tipo : 3 }).then( x => console.log()).catch( x => console.log(x));
+*/
 
-
-export function addProductoFull(producto,estado,precio,preciokg,mercado,cantidad,cantidadud,max,units,prioridad,tipo,frecuencia){
-    return new Promise( async (ok,ko) => {
-        try{
-            let conexion = await conectar();
-
-            let respuesta = await conexion `INSERT INTO productos
-                                                (producto,estado,precio,preciokg,mercado,cantidad,cantidadud,max,units,prioridad,tipo,frecuencia)
-                                            VALUES
-                                                (${producto},${estado},${precio},${preciokg},${mercado},${cantidad},${cantidadud},${max},${units},${prioridad},${tipo},${frecuencia})
-                                            RETURNING id
-                                            `;
-
-            conexion.end();
-            ok(respuesta);
-
-        }catch(error){
-            ko({ error : "add producto full db error" });
-            console.log(error);
-        }
-    });
-}
 
 
 
@@ -377,13 +546,12 @@ export function delTipo(id){
 *   - Actualizar precio -------> updatePrecio()     | ok |  ok
 *   - Actualizar precio/kg ----> updatePrecioKg()   | ok |  ok
 *   - Actualizar mercado ------> updateMercado()    | ok |  ok
-*   - Actualizar cantidad -----> updateCantidad()   | ok |  --
-*   - Actualizar cantidad ud --> updateCantidadUd() | ok |  --
+*   - Actualizar cantidad -----> updateCantidad()   | ok |  ok
 *   - Actualizar max ----------> updateMax()        | ok |  ok
-*   - Actualizar unidades -----> updateUnits()      | ok |  --
+*   - Actualizar unidades -----> updateUnits()      | ok |  ok
 *   - Actualizar prioridad ----> updatePrioridad()  | ok |  ok
-*   - Actualizar tipo ---------> updateTipo()       | ok |  --
-*   - Actualizar frecuencia ---> updateFrecuencia() | ok |  -- 
+*   - Actualizar tipo ---------> updateTipo()       | ok |  ok
+*   - Actualizar frecuencia ---> updateFrecuencia() | ok |  ok
 *
 * ------------------------------------------------------ */
 
@@ -481,46 +649,27 @@ export function updateMercado(id,mercado){
 
 
 
-export function updateCantidad(id,cantidad){
+export function updateCantidad(id,cantidad,cantidadud){
     return new Promise( async (ok,ko) => {
+        console.log(cantidad,cantidadud)
+
         try{
             let conexion = await conectar();
 
-            let resultado = await conexion `UPDATE productos SET cantidad = ${cantidad} WHERE id = ${id}`;
+            let resultado = await conexion `UPDATE productos SET cantidad = ${cantidad}, cantidadud = ${cantidadud} WHERE id = ${id}`;
 
             conexion.end();
             ok(resultado);
 
         }catch(error){
             ko({ error : "update cantidad db error" });
+            console.log(error)
         }
     });
 }
 
 /*
 updateCantidad(50,"30").then( x => console.log(x)).catch( x => console.log(x));
-*/
-
-
-
-export function updateCantidadUd(id,cantidadud){
-    return new Promise( async (ok,ko) => {
-        try{
-            let conexion = await conectar();
-
-            let resultado = await conexion `UPDATE productos SET cantidadud = ${cantidadud} WHERE id = ${id}`;
-
-            conexion.end();
-            ok(resultado);
-
-        }catch(error){
-            ko({ error : "update cantidad ud db error" });
-        }
-    });
-}
-
-/*
-updateCantidadUd(50,"kg").then( x => console.log(x)).catch( x => console.log(x));
 */
 
 
