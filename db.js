@@ -15,22 +15,36 @@ function conectar(){
 
 
 
-/* ------------------------------------------------------------------------------------------------------------------------ */
 
 
-/* LEER -------------------------------------------------------- *\
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* LEER ------------------------------------------------------------------------------------------------------------------------ *\
 *
-*                                                  DB - index
-*   - Join productos full info --> productos()     | ok |  ok
-*   - Leer tabla productos ------> productosInfo() | ok |  ok
-*   - Leer mercados -------------> mercados()      | ok |  ok
-*   - Leer prioridad ------------> prioridad()     | ok |  ok
-*   - Leer tipos ----------------> tipos()         | ok |  ok
+*                                                                         DB - index
+*   - Join productos full info ------> switch for productosFrecuencia() | ok |  ok
+*       · Leer tabla productos ------> productosInfo()                  | ok |  ok
+*       · Leer lista compra ---------> listacompra()                    | ok |  ok
+*       · Leer productos mensuales --> change for productos()           | ok |  ok
+*   - Leer mercados -----------------> mercados()                       | ok |  ok
+*   - Leer prioridad ----------------> prioridad()                      | ok |  ok
+*   - Leer tipos --------------------> tipos()                          | ok |  ok
 *
-* --------------------------------------------------------------- */
+* ------------------------------------------------------------------------------------------------------------------------------ */
 
 
+/* productos() ------------------------------------------------------------------------- *\
 
+*   ~ JOIN de productos con mercados,prioridad,tipos
+*       ~ productos.mercado (int)  = mercados.id ---> returning  mercados.mercado
+*       ~ prouctos.prioridad (int) = prioridad.id --> returning  prioridad.prioridad
+*       ~ productos.tipo (int)     = tipos.id ------> returning  tipos.tipo
+*   ~ CONCAT cantidad,cantidadud --> returning cantidad
+*
+* -------------------------------------------------------------------------------------- */
+
+/*
 export function productos(){
     return new Promise( async (ok,ko) => {
         try{
@@ -69,12 +83,82 @@ export function productos(){
         }
     })
 }
+*/
 
 /*
 productos().then( x => console.log(x)).catch( x => console.log(x));
 */
 
 
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* productosFrecuencia() -------------------------------------------- *\
+*
+*   ~ Separar por frecuencia (int) --> 1 (mensual) | 2 (ocasional)
+*
+* ------------------------------------------------------------------- */
+
+export function productos(frecuencia,producto,mercado,tipo,prioridad){
+    return new Promise( async (ok,ko) => {
+        try{
+            let conexion = conectar();
+
+            let resultado = await conexion `SELECT 
+                                                productos.id,
+                                                productos.producto,
+                                                productos.estado,
+                                                productos.precio,
+                                                productos.preciokg,
+                                                productos.max,
+                                                productos.units,
+                                                productos.frecuencia,
+                                                productos.tipo,
+                                                mercados.mercado,
+                                                prioridad.prioridad,
+                                                tipos.tipo,
+                                            concat(cantidad,cantidadud) AS cantidad
+                                            FROM productos
+                                            JOIN mercados ON
+                                                productos.mercado = mercados.id
+                                            JOIN prioridad ON
+                                                productos.prioridad = prioridad.id
+                                            JOIN tipos ON
+                                                productos.tipo = tipos.id
+                                            WHERE frecuencia = ${frecuencia}
+                                            ORDER BY estado,prioridad,productos.tipo ASC
+                                            `;
+                                            
+            
+            conexion.end();
+            ok(resultado);
+
+        }catch(error){
+            console.log(error)
+            ko({ error : "productos frecuencia db error" });
+        }
+    });
+}
+
+/*
+productosFrecuencia(2,"ajo").then( x => console.log(x)).catch( x => console.log(x));
+*/
+
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* productosInfo() -------------------------------------------------- *\
+*
+*   ~ Seleccionar toda tabla sin JOIN
+*       ~ Seleccionar mercados,prioridad,tipos desde id
+*       ~ Editar mercados,prioridad,tipos cambiando id
+*
+* --------------------------------------------------------------------*/
 
 export function productosInfo(){
     return new Promise( async (ok,ko) => {
@@ -92,7 +176,21 @@ export function productosInfo(){
     });
 }
 
+/*
+productosInfo().then( x => console.log(x)).catch( x => console.log(x));
+*/
 
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* listaCompra() ----------------------------------------------------- *\
+*
+*   ~ Selección de productos que hay que comprar --> estado = false
+*
+* -------------------------------------------------------------------- */
 
 export function listaCompra(){
     return new Promise( async (ok,ko) => {
@@ -141,52 +239,17 @@ listaCompra(1).then( x => console.log(x)).catch( x => console.log(x))
 
 
 
-export function productosFrecuencia(frecuencia,producto,mercado,tipo,prioridad){
-    return new Promise( async (ok,ko) => {
-        try{
-            let conexion = conectar();
-
-            let resultado = await conexion `SELECT 
-                                                productos.id,
-                                                productos.producto,
-                                                productos.estado,
-                                                productos.precio,
-                                                productos.preciokg,
-                                                productos.max,
-                                                productos.units,
-                                                productos.frecuencia,
-                                                productos.tipo,
-                                                mercados.mercado,
-                                                prioridad.prioridad,
-                                                tipos.tipo,
-                                            concat(cantidad,cantidadud) AS cantidad
-                                            FROM productos
-                                            JOIN mercados ON
-                                                productos.mercado = mercados.id
-                                            JOIN prioridad ON
-                                                productos.prioridad = prioridad.id
-                                            JOIN tipos ON
-                                                productos.tipo = tipos.id
-                                            WHERE frecuencia = ${frecuencia}
-                                            ORDER BY estado,prioridad,productos.tipo ASC
-                                            `;
-                                            
-            
-            conexion.end();
-            ok(resultado);
-
-        }catch(error){
-            console.log(error)
-            ko({ error : "productos frecuencia db error" });
-        }
-    });
-}
-
-/*
-productosFrecuencia(2,"ajo").then( x => console.log(x)).catch( x => console.log(x));
-*/
 
 
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* mercados() ------------------------------------------------------------- *\
+*
+*   ~ FETCH mercados para crear listas de selección en CREAR | EDITAR
+*   ~ FILTER mercados por id (productos.mercado) para devolver mercado
+*
+* ------------------------------------------------------------------------- */
 
 export function mercados(){
     return new Promise( async (ok,ko) => {
@@ -204,7 +267,22 @@ export function mercados(){
     });
 }
 
+/*
+mercados().then( x => console.log(x)).catch( x => console.log(x));
+*/
 
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* prioridad() ----------------------------------------------------------------- *\
+*
+*   ~ FETCH prioridad para crear listas de selección en CREAR | EDITAR
+*   ~ FILTER prioridad por id (productos.prioridad) para devolver prioridad
+*
+* ------------------------------------------------------------------------------ */
 
 export function prioridad(){
     return new Promise( async (ok,ko) => {
@@ -222,7 +300,22 @@ export function prioridad(){
     });
 }
 
+/*
+prioridad().then( x => console.log(x)).catch( x => console.log(x));
+*/
 
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* tipos() ------------------------------------------------------------ *\
+*
+*   ~ FETCH tipos para crear listas de selección en CREAR | EDITAR
+*   ~ FILTER tipos por id (productos.tipo) para devolver tipo
+*
+* ---------------------------------------------------------------------- */
 
 export function tipos(){
     return new Promise( async (ok,ko) => {
@@ -247,19 +340,31 @@ tipos().then( x => console.log(x)).catch( x => console.log(x));
 
 
 
-/* ------------------------------------------------------------------------------------------------------------------------ */
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 
-/* CREAR ----------------------------------------------- *\
+
+
+
+/* CREAR --------------------------------------------------------------------------------------------- *\
 *
 *                                               DB - index
 *   - Crear productos ---> addProductos()     | ok |  ok
-*       · Más opciones --> addProductoFull()  | ok |  ok
 *   - Crear mercados ----> addMercados()      | ok |  ok
 *   - Crear prioridad ---> addPrioridad()     | ok |  ok
 *   - Crear tipos -------> addTipos()         | ok |  ok
 *
-* ------------------------------------------------------ */
+* ---------------------------------------------------------------------------------------------------- */
+
+
+/* addProducto() ---------------------------------------------------------------------------------------------------------------------- *\
+*
+*   ~ Crear nuevo producto con campos obligatorios --> INSERT producto,estado,precio,mercado --> returning id (desestructurado)
+*   ~ Essperar a comprobar si un campo es null (vacío) para comprobar el siguiente
+*       ~ Si el campo está relleno --> UPDATE campo --> id = id desestructurado
+*
+* ------------------------------------------------------------------------------------------------------------------------------------- */
 
 export function addProducto(producto,estado,precio,mercado,preciokg,cantidad,cantidadud,units,max,prioridad,tipo,frecuencia){
     return new Promise( async (ok,ko) => {
@@ -382,6 +487,15 @@ addProducto({ producto : "merluza", estado : false, precio : 0.6, mercado : 5, p
 
 
 
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* addMercado() ------------------------------------------------------------ *\
+*
+*   ~ Añadir mercado para selección de mercados en CREAR | EDITAR producto
+*
+* -------------------------------------------------------------------------- */
+
 export function addMercado(mercado){
     return new Promise( async (ok,ko) => {
         try{
@@ -399,7 +513,21 @@ export function addMercado(mercado){
     });
 }
 
+/*
+addMercado("Mercadona").then( x => console.log(x)).catch( x => console.log(x));
+*/
 
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* addPrioridad ------------------------------------------------------------------ *\
+*
+*   ~ Añadir prioridad para selección de prioridad en CREAR | EDITAR producto
+*
+* -------------------------------------------------------------------------------- */
 
 export function addPrioridad(prioridad){
     return new Promise( async (ok,ko) => {
@@ -417,7 +545,21 @@ export function addPrioridad(prioridad){
     });
 }
 
+/*
+addPrioridad("opcional").then( x => console.log(x)).catch( x => console.log(x));
+*/
 
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* addTipo ------------------------------------------------------------- *\
+*
+*   ~ Añadir tipo para selección de tipos en CREAR | EDITAR producto
+*
+* ---------------------------------------------------------------------- */
 
 export function addTipo(tipo){
     return new Promise( async (ok,ko) => {
@@ -442,10 +584,14 @@ addTipos("basico").then( x => console.log(x)).catch( x => console.log(x));
 
 
 
-/* ------------------------------------------------------------------------------------------------------------------------ */
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 
-/* BORRAR ----------------------------------------------- *\
+
+
+
+/* BORRAR ----------------------------------------------------------------------------------------------- *\
 *
 *                                           DB - index
 *   - Borrar productos --> delProductos() | ok |  ok
@@ -453,9 +599,10 @@ addTipos("basico").then( x => console.log(x)).catch( x => console.log(x));
 *   - Borrar prioridad --> delPrioridad() | ok |  ok
 *   - Borrar tipos ------> delTipos()     | ok |  ok
 *
-* ------------------------------------------------------ */
+* -------------------------------------------------------------------------------------------------------- */
 
 
+/* delProducto() ------------------------------------------------------------ */
 
 export function delProducto(id){
     return new Promise( async (ok,ko) => {
@@ -473,7 +620,17 @@ export function delProducto(id){
     });
 }
 
+/*
+delProducto(1).then( x => console.log(x)).catch( x => console.log(x));
+*/
 
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* delMercado() ------------------------------------------------------------------ */
 
 export function delMercado(id){
     return new Promise( async (ok,ko) => {
@@ -491,7 +648,17 @@ export function delMercado(id){
     });
 }
 
+/*
+delMercado(1).then( x => console.log(x)).catch( x = console.log(x));
+*/
 
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* delPrioridad() -------------------------------------------------------------------- */
 
 export function delPrioridad(id){
     return new Promise( async (ok,ko) => {
@@ -515,6 +682,12 @@ delPrioridad(4).then( x => console.log(x)).catch( x => console.log(x));
 
 
 
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* delTipo() ------------------------------------------------------------------------- */
+
 export function delTipo(id){
     return new Promise( async (ok,ko) => {
         try{
@@ -531,14 +704,21 @@ export function delTipo(id){
     });
 }
 
+/*
+delTipo(1).then( x => console.log(x)).catch( x => console.log(x));
+*/
 
 
 
 
-/* ------------------------------------------------------------------------------------------------------------------------ */
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 
-/* ACTUALIZAR ----------------------------------------------- *\
+
+
+
+/* ACTUALIZAR -------------------------------------------------------------------------------------------------------- *\
 *
 *                                                    DB - index
 *   - Actualizar productos ----> updateProductos()  | ok |  ok
@@ -553,9 +733,10 @@ export function delTipo(id){
 *   - Actualizar tipo ---------> updateTipo()       | ok |  ok
 *   - Actualizar frecuencia ---> updateFrecuencia() | ok |  ok
 *
-* ------------------------------------------------------ */
+* -------------------------------------------------------------------------------------------------------------------- */
 
 
+/* updateProducto() -------------------------------------------------------------------------------------------------- */
 
 export function updateProducto(id,producto){
     return new Promise( async (ok,ko) => {
@@ -574,7 +755,17 @@ export function updateProducto(id,producto){
     })
 }
 
+/*
+updateProducto(1,"Mantequilla").then( x => console.log(x)).catch( x => console.log(x));
+*/
 
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* updateEstado() ------------------------------------------------------------------------------------------------- */
 
 export function updateEstado(id,estado){
     return new Promise( async (ok,ko) => {
@@ -592,7 +783,18 @@ export function updateEstado(id,estado){
     });
 }
 
+/*
+updateEstado(1,true).then( x => console.log(x)).catch( x => console.log(x));
+*/
 
+
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* updatePrecio() ------------------------------------------------------------------------------------------- */
 
 export function updatePrecio(id,precio){
     return new Promise( async (ok,ko) => {
@@ -610,7 +812,17 @@ export function updatePrecio(id,precio){
     });
 }
 
+/*
+updatePrecio(1,0.35).then( x => console.log(x)).catch( x => console.log(x));
+*/
 
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* updatePrecioKg() -------------------------------------------------------------------------------------------- */
 
 export function updatePrecioKg(id,preciokg){
     return new Promise( async (ok,ko) => {
@@ -629,7 +841,21 @@ export function updatePrecioKg(id,preciokg){
     });
 }
 
+/*
+updatePrecioKg(1,1.67).then( x => console.log(x)).catch( x => console.log(x));
+*/
 
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* updateMercado() ------------------------------------- *\
+*
+*   ~ UPDATE productos mercado (int) --> mercados id
+*
+* ------------------------------------------------------ */
 
 export function updateMercado(id,mercado){
     return new Promise( async (ok,ko) => {
@@ -647,7 +873,23 @@ export function updateMercado(id,mercado){
     });
 }
 
+/*
+updateMercado(1,2).then( x => console.log(x)).catch( x => console.log(x));
+*/
 
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* updateCantidad() -------------------------------------------- *\
+*
+*   ~ UPDATE cantidad y cantidadud --> concat en productos()
+*       ~ cantidad ----> número
+*       ~ cantidadud --> unidad (kg,l)
+*
+* -------------------------------------------------------------- */
 
 export function updateCantidad(id,cantidad,cantidadud){
     return new Promise( async (ok,ko) => {
@@ -674,6 +916,12 @@ updateCantidad(50,"30").then( x => console.log(x)).catch( x => console.log(x));
 
 
 
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* updateMax() ------------------------------------------------------------------------------------ */
+
 export function updateMax(id,max){
     return new Promise( async (ok,ko) => {
         try{
@@ -690,7 +938,18 @@ export function updateMax(id,max){
     });
 }
 
+/*
+updateMax(1,2).then( x => console.log(x)).catch( x => console.log(x));
+*/
 
+
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* updateUnits() ---------------------------------------------------------------------------------------------- */
 
 export function updateUnits(id,units){
     return new Promise( async (ok,ko) => {
@@ -708,7 +967,21 @@ export function updateUnits(id,units){
     });
 }
 
+/*
+updateUnits(1,3).then( x => console.log(x)).catch( x => console.log(x));
+*/
 
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* updatePrioridad() ------------------------------------------ *\
+*
+*   ~ UPDATE productos prioridad (int) --> prioridad id
+*
+* ------------------------------------------------------------- */
 
 export function updatePrioridad(id,prioridad){
     return new Promise( async (ok,ko) => {
@@ -726,7 +999,21 @@ export function updatePrioridad(id,prioridad){
     });
 }
 
+/*
+updatePrioridad(1,3).then( x => console.log(x)).catch( x => console.log(x));
+*/
 
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* updateTipo() ----------------------------------- *\
+*
+*   ~ UPDATE producto tipo (int) --> tipos id
+*
+* ------------------------------------------------- */
 
 export function updateTipo(id,tipo){
     return new Promise( async (ok,ko) => {
@@ -750,6 +1037,12 @@ updateTipo("1").then( x => console.log(x)).catch( x => console.log(x));
 
 
 
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* updateFrecuencia() -------------------------------------------------------------------------------------------- */
+
 export function updateFrecuencia(id,frecuencia){
     return new Promise( async (ok,ko) => {
         try{
@@ -766,21 +1059,31 @@ export function updateFrecuencia(id,frecuencia){
     });
 }
 
+/*
+updateFrecuencia(1,2).then( x => console.log(x)).catch( x => console.log(x));
+*/
+
+
 
 
 
 /* ------------------------------------------------------------------------------------------------------------------------ */
 
-/* EDITAR ----------------------------------------------- *\
+/* EDITAR --------------------------------------------------------------------------------------------------------- *\
 *
 *                                            DB - index
 *   - Editar mercados ---> editMercados()  | ok |  ok
 *   - Editar prioridad --> editPrioridad() | ok |  ok
 *   - Editar tipos ------> editTipos()     | ok |  ok
 *
-* ------------------------------------------------------ */
+* ----------------------------------------------------------------------------------------------------------------- */
 
 
+/* editMercados() ------------------------------------------------------- *\
+*
+*   ~ Editar nombre de mercado --> cambia en productos (mercados.id)
+*
+* ----------------------------------------------------------------------- */
 
 export function editMercados(id,mercado){
     return new Promise( async (ok,ko) => {
@@ -798,7 +1101,21 @@ export function editMercados(id,mercado){
     });
 }
 
+/*
+editMercados(2,"Lidl").then( x => console.log(x)).catch( x => console.log(x));
+*/
 
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* editPrioridad() ------------------------------------------------------- *\
+*
+*   ~ Editar nombre prioridad --> cambia en productos (prioridad.id)
+*
+* ------------------------------------------------------------------------ */
 
 export function editPrioridad(id,prioridad){
     return new Promise( async (ok,ko) => {
@@ -816,7 +1133,21 @@ export function editPrioridad(id,prioridad){
     });
 }
 
+/*
+editPrioridad(2,"ok").then( x => console.log(x)).catch( x => console.log(x));
+*/
 
+
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
+/* editTipos() --------------------------------------------------- *\
+*
+*   ~ Editar nombre de tipo --> cambia en productos (tipos.id)
+*
+* ---------------------------------------------------------------- */
 
 export function editTipos(id,tipo){
     return new Promise( async (ok,ko) => {

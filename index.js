@@ -3,7 +3,7 @@ import cors from "cors";
 import dotevn from "dotenv";
 import { 
     productos,addProducto,delProducto,updateProducto,
-    productosInfo,listaCompra,productosFrecuencia,
+    productosInfo,listaCompra,
     updateEstado,updatePrecio,updatePrecioKg,updateMercado,updateCantidad,updateMax,updateUnits,updatePrioridad,updateTipo,updateFrecuencia,
     mercados,addMercado,delMercado,editMercados,
     prioridad,addPrioridad,delPrioridad,editPrioridad,
@@ -21,18 +21,26 @@ server.use(express.json());
 
 
 
-/* ------------------------------------------------------------------------------------------------------------------------ */
 
-/* GET ----------------------------------------------- *\
-*
-*   - Get productos ----> productos()        | ok
-*   - Get productos info --> productosInfo() | ok
-*   - Get mercados -----> mercados()         | ok
-*   - Get prioridad ----> prioridad()        | ok
-*   - Get tipos --------> tipos()            | ok
-*
-* ------------------------------------------------------ */
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------- */
 
+
+/* GET ---------------------------------------------------------------------------------------------------------- *\
+*
+*   - GET productos() -----------------> switch for productosFrecuencia() | --
+*       · GET productosInfo() ---------> /productos/info                  | ok
+*       · POST listaCompra() ----------> /productos/compra                | ok
+*       · POST productosFrecuencia() --> move to /productos               | --
+*   - GET mercados() ------------------> /mercados                        | ok
+*   - GET prioridad() -----------------> /prioridad                       | ok
+*   - GET tipos() ---------------------> /tipos                           | ok
+*
+* --------------------------------------------------------------------------------------------------------------- */
+
+
+/* PRODUCTOS ---------------------------------------------------------------------------------------- */
+
+/*
 server.get("/productos", async (req,res) => {
     try{
         let listaProductos = await productos();
@@ -42,6 +50,22 @@ server.get("/productos", async (req,res) => {
     }catch(error){
         res.status(500);
         res.send({ error : "productos req error" });
+    }
+});
+*/
+
+
+
+server.post("/productos/", async (req,res) => {
+    try{
+        let listaFrecuencia = await productos(req.body.frecuencia);
+
+        res.json(listaFrecuencia)
+
+    }catch(error){
+        console.log(error)
+        res.status(500);
+        res.send({ error : "productos frecuencia req error" });
     }
 });
 
@@ -75,20 +99,9 @@ server.post("/productos/compra", async (req,res) => {
 
 
 
-server.post("/productos/frecuencia", async (req,res) => {
-    try{
-        let listaFrecuencia = await productosFrecuencia(req.body.frecuencia);
-
-        res.json(listaFrecuencia)
-
-    }catch(error){
-        console.log(error)
-        res.status(500);
-        res.send({ error : "productos frecuencia req error" });
-    }
-});
 
 
+/* MERCADOS, PRIORIDAD, TIPOS ------------------------------------------------------------------------------------------------*/
 
 server.get("/mercados", async (req,res) => {
     try{
@@ -133,21 +146,28 @@ server.get("/tipos", async (req,res) => {
 
 
 
+
 /* ------------------------------------------------------------------------------------------------------------------------ */
 
-/* POST ----------------------------------------------- *\
+
+/* POST -------------------------------------------------------------- *\
 *
-*   - Post productos ----------> addProductos()    | ok
-*   - Post mercados -----------> addMercados()     | ok
-*   - Post prioridad ----------> addPrioridad()    | ok
-*   - Post tipos --------------> addTipos()        | ok
+*   - POST addProductos() ----------> /productos/nuevo | ok
+*   - POST addMercados() -----------> /mercados/nuevo  | ok
+*   - POST addPrioridad() ----------> /prioridad/nueva | ok
+*   - POST addTipos() --------------> /tipos/nuevo     | ok
 *
-* ------------------------------------------------------ */
+* -------------------------------------------------------------------- */
+
+
+/* PRODUCTO NUEVO ------------------------------------------------------------------------------------------- *\
+*
+*   ~ Props del front vacías --> valor null en req.body --> addProducto() filtra los campos vacíos
+*
+* ----------------------------------------------------------------------------------------------------------- */
 
 server.post("/productos/nuevo", async (req,res) => {
     try{
-
-        console.log(req.body)
         let nuevoProducto = await addProducto(  req.body.producto,
                                                 req.body.estado,
                                                 req.body.precio,
@@ -174,6 +194,10 @@ server.post("/productos/nuevo", async (req,res) => {
 
 
 
+/* ------------------------------------------------------------------------------------------------------------------------ */
+
+
+/* MERCADOS,PRIORIDAD,TIPOS NUEVO */
 
 server.post("/mercados/nuevo", async (req,res) => {
     try{
@@ -218,16 +242,19 @@ server.post("/tipos/nuevo", async (req,res) => {
 
 
 
+
 /* ------------------------------------------------------------------------------------------------------------------------ */
 
-/* DELETE ----------------------------------------------- *\
+
+/* DELETE ----------------------------------------------------------- *\
 *
-*   - Delete productos --> deleteProductos() | ok
-*   - Delete mercados ---> deleteMercados()  | ok
-*   - Delete prioridad --> deletePrioridad() | ok
-*   - Delete tipos ------> deleteTipos()     | ok
+*   - DELETE deleteProductos() --> /productos/borrar | ok
+*   - DELETE deleteMercados() ---> /mercados/borrar  | ok
+*   - DELETE deletePrioridad() --> /prioridad/borrar | ok
+*   - DELETE deleteTipos() ------> /tipos/borrar     | ok
 *
-* ------------------------------------------------------ */
+* ------------------------------------------------------------------- */
+
 
 server.delete("/productos/borrar", async (req,res) => {
     try{
@@ -289,27 +316,32 @@ server.delete("/tipos/borrar", async (req,res) => {
 
 
 
+
 /* ------------------------------------------------------------------------------------------------------------------------ */
 
-/* PUT ----------------------------------------------- *\
+
+/* PUT --------------------------------------------------------------------- *\
 *
-*   - Put productos ----> updateproductos()  | ok
-*   - Put estado -------> updateEstado()     | ok
-*   - Put precio -------> updatePrecio()     | ok
-*   - Put precio kg ----> updatePrecioKg()   | ok
-*   - Put mercado ------> updateMercado()    | ok
-*   - Put cantidad -----> updateCantidad()   | ok
-*   - Put max ----------> updateMax()        | ok
-*   - Put unidades -----> updateUnits()      | ok
-*   - Put prioridad ----> updatePrioridad()  | ok
-*   - Put tipo ---------> updateTipo()       | ok
-*   - Put frecuencia ---> updateFrecuencia   | ok
+*   - PUT updateproductos() --> /productos/editar/producto   | ok
+*   - PUT updateEstado() -----> /productos/editar/estado     | ok
+*   - PUT updatePrecio() -----> /productos/editar/precio     | ok
+*   - PUT updatePrecioKg() ---> /productos/editar/preciokg   | ok
+*   - PUT updateMercado() ----> /productos/editar/mercado    | ok
+*   - PUT updateCantidad() ---> /productos/editar/cantidad   | ok
+*   - PUT updateMax() --------> /productos/editar/max        | ok
+*   - PUT updateUnits() ------> /productos/editar/units      | ok
+*   - PUT updatePrioridad() --> /productos/editar/prioridad  | ok
+*   - PUT updateTipo() -------> /productos/editar/tipo       | ok
+*   - PUT updateFrecuencia() -> /productos/editar/frecuencia | ok
 *
-*   - Put mercados -----> editMercados()     | ok
-*   - Put prioridad ----> editPrioridad()    | ok
-*   - Put tipos --------> editTipos()        | ok
+*   - PUT editMercados() -----> /mercados/editar             | ok
+*   - PUT editPrioridad() ----> /prioridad/editar            | ok
+*   - PUT editTipos() --------> /prioridad/editar            | ok
 *
-* ------------------------------------------------------ */
+* ---------------------------------------------------------------------------- */
+
+
+/* EDITAR PRODUCTOS --------------------------------------------------------------------------------------------- */
 
 server.put("/productos/editar/producto", async (req,res) => {
     try{
@@ -468,6 +500,8 @@ server.put("/productos/editar/frecuencia", async (req,res) => {
 
 
 
+/* EDITAR MERCADOS,PRIORIDAD,TIPOS ------------------------------------------------------------------------------------- */
+
 server.put("/mercados/editar", async (req,res) => {
     try{
         let editarMercados = await editMercados(req.body.id,req.body.mercado);
@@ -508,6 +542,12 @@ server.put("/tipos/editar", async (req,res) => {
         console.log(error);
     }
 });
+
+
+
+
+
+/* ------------------------------------------------------------------------------------------------------------------------ */
 
 
 
