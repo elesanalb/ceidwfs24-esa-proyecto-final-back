@@ -360,13 +360,88 @@ tipos().then( x => console.log(x)).catch( x => console.log(x));
 
 /* addProducto() ---------------------------------------------------------------------------------------------------------------------- *\
 *
-*   ~ Crear nuevo producto con campos obligatorios --> INSERT producto,estado,precio,mercado --> returning id (desestructurado)
-*   ~ Essperar a comprobar si un campo es null (vacío) para comprobar el siguiente
-*       ~ Si el campo está relleno --> UPDATE campo --> id = id desestructurado
+*   ~ Crear nuevo producto con campos obligatorios --> producto,estado,precio,mercado
+*   ~ Campo opcional --> variable con valor NULL 
+*       ~ Si el campo no está vacío --> variable = valor
 *
 * ------------------------------------------------------------------------------------------------------------------------------------- */
 
 export function addProducto(producto,estado,precio,mercado,preciokg,cantidad,cantidadud,units,max,prioridad,tipo,frecuencia){
+    return new Promise( async (ok,ko) => {
+        
+        try{
+            let conexion = await conectar();
+
+            let newpreciokg = null;
+            if( preciokg ){
+                newpreciokg = preciokg;
+            }
+
+            let newcantidad = null;
+            if(  cantidad ){
+                newcantidad = cantidad;
+            }
+
+            let newcantidadud = null;
+            if( cantidadud ){
+                newcantidadud = cantidadud;
+            }
+
+            let newunits = null;
+            if( units ){
+                newunits = units
+            }
+
+            let newmax = null;
+            if( max ){
+                newmax = max;
+            }
+
+            let newprioridad = null;
+            if( prioridad ){
+                newprioridad = prioridad;
+            }
+
+            let newtipo = null;
+            if( tipo ){
+                newtipo = tipo;
+            }
+
+            let newfrecuencia = null;
+            if( frecuencia ){
+                newfrecuencia = frecuencia;
+            }
+
+            
+            let [{id}] = await conexion `INSERT INTO productos 
+                                                (producto,estado,precio,mercado,preciokg,cantidad,cantidadud,units,max,prioridad,tipo,frecuencia)
+                                            VALUES
+                                                (${producto},${estado},${precio},${mercado},${newpreciokg},${newcantidad},${newcantidadud},${newunits},${newmax},${newprioridad},${newtipo},${newfrecuencia})
+                                            RETURNING id
+                                            `;
+
+            
+
+            conexion.end();
+            ok(id);
+
+
+        }catch(error){
+            ko({ error : "add producto db error" });
+            console.log(error)
+        }
+    });
+}
+
+/*
+addProductoPrueba({ producto : "Queso cuña", estado : false, precio : 6.47, mercado : 3}).then( x => console.log(x)).catch( x => console.log(x));
+*/
+
+
+
+
+/*
+export function addProductoDISCARDED(producto,estado,precio,mercado,preciokg,cantidad,cantidadud,units,max,prioridad,tipo,frecuencia){
     return new Promise( async (ok,ko) => {
         
         try{
@@ -479,10 +554,12 @@ export function addProducto(producto,estado,precio,mercado,preciokg,cantidad,can
         }
     });
 }
+*/
 
 /*
 addProducto({ producto : "merluza", estado : false, precio : 0.6, mercado : 5, preciokg : null, cantidad : 40, cantidadud : "g", units : 2, tipo : 3 }).then( x => console.log()).catch( x => console.log(x));
 */
+
 
 
 
