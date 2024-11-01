@@ -56,7 +56,7 @@ server.get("/productos", async (req,res) => {
 
 
 
-server.post("/productos/", async (req,res) => {
+server.get("/productos/", async (req,res) => {
     try{
         let listaFrecuencia = await productos(req.body.frecuencia);
 
@@ -166,7 +166,7 @@ server.get("/tipos", async (req,res) => {
 *
 * ----------------------------------------------------------------------------------------------------------- */
 
-server.post("/productos/nuevo", async (req,res) => {
+server.post("/productos/nuevo", async (req,res,next) => {
     try{
         let nuevoProducto = await addProducto(  req.body.producto,
                                                 req.body.estado,
