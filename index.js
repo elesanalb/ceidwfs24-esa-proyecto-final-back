@@ -56,7 +56,7 @@ server.get("/productos", async (req,res) => {
 
 
 
-server.get("/productos/", async (req,res) => {
+server.post("/productos/", async (req,res) => {
     try{
         let listaFrecuencia = await productos(req.body.frecuencia);
 
